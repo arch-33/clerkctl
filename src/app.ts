@@ -3,11 +3,13 @@ import { buildInstallCommand, buildUninstallCommand } from '@stricli/auto-comple
 import { name, version, description } from '../package.json';
 import { projectRoutes } from './commands/project/commands';
 import { appRoutes } from './commands/app/commands';
+import { configCommand } from './commands/config/command';
 
 const routes = buildRouteMap({
   routes: {
     project: projectRoutes,
     app: appRoutes,
+    config: configCommand,
     install: buildInstallCommand('clerk-utils', { bash: '__clerk-utils_bash_complete' }),
     uninstall: buildUninstallCommand('clerk-utils', { bash: true }),
   },
