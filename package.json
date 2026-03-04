@@ -1,5 +1,5 @@
 {
-  "name": "clerk-utils",
+  "name": "clerkctl",
   "author": "",
   "description": "Clerk utilities CLI",
   "license": "MIT",
@@ -9,8 +9,13 @@
     "dist"
   ],
   "bin": {
-    "clerk-utils": "dist/cli.js"
+    "clerkctl": "dist/cli.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/arch-33/clerkctl"
+  },
+  "packageManager": "pnpm@10.30.3",
   "engines": {
     "node": ">=22"
   },
@@ -21,7 +26,7 @@
     "format:check": "prettier --check .",
     "lint-staged": "lint-staged",
     "prepublishOnly": "npm run build",
-    "prepare": "husky install"
+    "prepare": "husky"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,cts,mts,json,md,mdx,yml,yaml}": "prettier --write --ignore-unknown"

@@ -14,7 +14,7 @@ if (process.argv.length <= 2) {
 }
 
 const program = new Command();
-program.name('clerk-utils').description('Clerk utilities CLI').version(version);
+program.name('clerkctl').description('Clerk utilities CLI').version(version);
 
 // project commands
 const project = program.command('project').description('Manage Clerk projects');

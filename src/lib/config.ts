@@ -20,7 +20,7 @@ export interface ClerkUtilsConfig {
   projects: Record<string, ProjectConfig>;
 }
 
-const CONFIG_DIR = path.join(os.homedir(), '.clerk-utils');
+const CONFIG_DIR = path.join(os.homedir(), '.clerkctl');
 const CONFIG_FILE = path.join(CONFIG_DIR, 'config.yml');
 
 export function readConfig(): ClerkUtilsConfig {

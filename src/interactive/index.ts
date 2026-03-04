@@ -6,7 +6,7 @@ import { interactiveExtendSession } from './extend-session.js';
 import { interactiveSwitchOrg } from './switch-org.js';
 
 export async function runInteractive(): Promise<void> {
-  p.intro('clerk-utils');
+  p.intro('clerkctl');
 
   const action = await p.select({
     message: 'What do you want to do?',
