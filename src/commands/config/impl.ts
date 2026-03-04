@@ -1,5 +1,5 @@
 import type { LocalContext } from '../../context';
-import { CONFIG_FILE } from '../../config';
+import { CONFIG_FILE } from '../../lib/config';
 import fs from 'node:fs';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type

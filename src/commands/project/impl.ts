@@ -1,5 +1,5 @@
 import type { LocalContext } from '../../context';
-import { readConfig, writeConfig, CONFIG_FILE } from '../../config';
+import { readConfig, writeConfig, CONFIG_FILE } from '../../lib/config';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface NoFlags {}

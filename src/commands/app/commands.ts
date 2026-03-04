@@ -159,6 +159,35 @@ const showCommand = buildCommand({
   },
 });
 
+const defaultCommand = buildCommand({
+  loader: async () => {
+    const { setDefault } = await import('./impl');
+    return setDefault;
+  },
+  parameters: {
+    positional: {
+      kind: 'tuple',
+      parameters: [
+        {
+          brief: 'App name',
+          parse: String,
+        },
+      ],
+    },
+    flags: {
+      project: {
+        kind: 'parsed',
+        parse: String,
+        brief: 'Project name (defaults to current project)',
+        optional: true,
+      },
+    },
+  },
+  docs: {
+    brief: 'Set the default app for a project',
+  },
+});
+
 export const appRoutes = buildRouteMap({
   routes: {
     add: addCommand,
@@ -166,6 +195,7 @@ export const appRoutes = buildRouteMap({
     remove: removeCommand,
     use: useCommand,
     show: showCommand,
+    default: defaultCommand,
   },
   docs: {
     brief: 'Manage Clerk apps within a project',

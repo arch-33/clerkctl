@@ -11,6 +11,7 @@ export interface ClerkAppConfig {
 
 export interface ProjectConfig {
   current_app?: string;
+  default_app?: string;
   apps: Record<string, ClerkAppConfig>;
 }
 
@@ -47,9 +48,9 @@ export function resolveProject(config: ClerkUtilsConfig, flag?: string): string 
 }
 
 export function resolveApp(project: ProjectConfig, flag?: string): string {
-  const name = flag ?? project.current_app;
+  const name = flag ?? project.current_app ?? project.default_app;
   if (!name) {
-    throw new Error('No app specified and no current app set. Use --app or run `app use <name>` first.');
+    throw new Error('No app specified and no current/default app set. Use --app, `app use <name>`, or `app default <name>`.');
   }
   return name;
 }

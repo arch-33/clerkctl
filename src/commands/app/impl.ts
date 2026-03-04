@@ -1,5 +1,5 @@
 import type { LocalContext } from '../../context';
-import { readConfig, writeConfig, resolveProject, resolveApp } from '../../config';
+import { readConfig, writeConfig, resolveProject, resolveApp } from '../../lib/config';
 
 interface AddFlags {
   project?: string;
@@ -147,4 +147,21 @@ export async function show(this: LocalContext, flags: ShowFlags): Promise<void> 
   if (!app.secret_key && !app.publishable_key && !app.webhook_secret) {
     this.process.stdout.write(`(no keys configured)\n`);
   }
+}
+
+export async function setDefault(this: LocalContext, flags: ProjectFlag, name: string): Promise<void> {
+  const config = readConfig();
+  const projectName = resolveProject(config, flags.project);
+  const project = config.projects[projectName];
+  if (!project) {
+    this.process.stderr.write(`Project "${projectName}" not found.\n`);
+    this.process.exit(1);
+  }
+  if (!project.apps[name]) {
+    this.process.stderr.write(`App "${name}" not found in project "${projectName}". Run \`app add ${name}\` first.\n`);
+    this.process.exit(1);
+  }
+  project.default_app = name;
+  writeConfig(config);
+  this.process.stdout.write(`Default app set to "${name}" in project "${projectName}".\n`);
 }
