@@ -29,6 +29,27 @@ export interface ClerkToken {
   jwt: string;
 }
 
+export interface ClerkOrganization {
+  id: string;
+  name: string;
+  slug: string | null;
+}
+
+export interface ClerkOrganizationMembership {
+  id: string;
+  role: string;
+  organization: ClerkOrganization;
+}
+
+export async function listUserOrganizationMemberships(secretKey: string, userId: string): Promise<ClerkOrganizationMembership[]> {
+  const response = await fetch(`${CLERK_API}/users/${userId}/organization_memberships?limit=100`, {
+    headers: headers(secretKey),
+  });
+  await checkResponse(response);
+  const data = await response.json() as { data: ClerkOrganizationMembership[] };
+  return data.data;
+}
+
 export async function createSession(secretKey: string, userId: string, activeOrganizationId: string): Promise<ClerkSession> {
   const response = await fetch(`${CLERK_API}/sessions`, {
     method: 'POST',

@@ -1,86 +1,75 @@
-import type { LocalContext } from '../../context';
-import { readConfig, writeConfig, resolveProject, resolveApp } from '../../lib/config';
+import * as p from '@clack/prompts';
+import { readConfig, writeConfig, resolveProject, resolveApp } from '../../lib/config.js';
 
-interface AddFlags {
+export interface AddAppOptions {
   project?: string;
-  'secret-key'?: string;
-  'publishable-key'?: string;
-  'webhook-secret'?: string;
+  secretKey?: string;
+  publishableKey?: string;
+  webhookSecret?: string;
 }
 
-export async function add(this: LocalContext, flags: AddFlags, name: string): Promise<void> {
+export async function add(name: string, opts: AddAppOptions = {}): Promise<void> {
   const config = readConfig();
-  const projectName = resolveProject(config, flags.project);
+  const projectName = resolveProject(config, opts.project);
   const project = config.projects[projectName];
   if (!project) {
-    this.process.stderr.write(`Project "${projectName}" not found. Run \`project add ${projectName}\` first.\n`);
-    this.process.exit(1);
-    return;
+    p.log.error(`Project "${projectName}" not found. Run \`project add ${projectName}\` first.`);
+    process.exit(1);
   }
   if (project.apps[name]) {
-    this.process.stderr.write(`App "${name}" already exists in project "${projectName}".\n`);
-    this.process.exit(1);
-    return;
+    p.log.error(`App "${name}" already exists in project "${projectName}".`);
+    process.exit(1);
   }
   project.apps[name] = {
-    ...(flags['secret-key'] ? { secret_key: flags['secret-key'] } : {}),
-    ...(flags['publishable-key'] ? { publishable_key: flags['publishable-key'] } : {}),
-    ...(flags['webhook-secret'] ? { webhook_secret: flags['webhook-secret'] } : {}),
+    ...(opts.secretKey ? { secret_key: opts.secretKey } : {}),
+    ...(opts.publishableKey ? { publishable_key: opts.publishableKey } : {}),
+    ...(opts.webhookSecret ? { webhook_secret: opts.webhookSecret } : {}),
   };
   if (!project.current_app) {
     project.current_app = name;
   }
   writeConfig(config);
-  this.process.stdout.write(`App "${name}" added to project "${projectName}".\n`);
+  p.log.success(`App "${name}" added to project "${projectName}".`);
   if (project.current_app === name) {
-    this.process.stdout.write(`Set as current app.\n`);
+    p.log.info(`Set as current app.`);
   }
 }
 
-interface ProjectFlag {
-  project?: string;
-}
-
-export async function list(this: LocalContext, flags: ProjectFlag): Promise<void> {
+export async function list(projectFlag?: string): Promise<void> {
   const config = readConfig();
-  const projectName = resolveProject(config, flags.project);
+  const projectName = resolveProject(config, projectFlag);
   const project = config.projects[projectName];
   if (!project) {
-    this.process.stderr.write(`Project "${projectName}" not found.\n`);
-    this.process.exit(1);
-    return;
+    p.log.error(`Project "${projectName}" not found.`);
+    process.exit(1);
   }
   const names = Object.keys(project.apps);
   if (names.length === 0) {
-    this.process.stdout.write(`No apps in project "${projectName}". Run \`app add <name>\` to create one.\n`);
+    p.log.info(`No apps in project "${projectName}". Run \`app add <name>\` to create one.`);
     return;
   }
-  this.process.stdout.write(`Apps in project "${projectName}":\n`);
-  for (const name of names) {
+  const lines = names.map((name) => {
     const isCurrent = name === project.current_app;
     const marker = isCurrent ? '* ' : '  ';
     const app = project.apps[name] ?? {};
-    const fields = [app.secret_key ? 'secret_key' : null, app.publishable_key ? 'publishable_key' : null, app.webhook_secret ? 'webhook_secret' : null].filter(
-      Boolean,
-    );
+    const fields = [app.secret_key ? 'secret_key' : null, app.publishable_key ? 'publishable_key' : null, app.webhook_secret ? 'webhook_secret' : null].filter(Boolean);
     const detail = fields.length > 0 ? ` [${fields.join(', ')}]` : ' [no keys set]';
-    this.process.stdout.write(`${marker}${name}${detail}\n`);
-  }
+    return `${marker}${name}${detail}`;
+  });
+  p.note(lines.join('\n'), `Apps in project "${projectName}"`);
 }
 
-export async function remove(this: LocalContext, flags: ProjectFlag, name: string): Promise<void> {
+export async function remove(name: string, projectFlag?: string): Promise<void> {
   const config = readConfig();
-  const projectName = resolveProject(config, flags.project);
+  const projectName = resolveProject(config, projectFlag);
   const project = config.projects[projectName];
   if (!project) {
-    this.process.stderr.write(`Project "${projectName}" not found.\n`);
-    this.process.exit(1);
-    return;
+    p.log.error(`Project "${projectName}" not found.`);
+    process.exit(1);
   }
   if (!project.apps[name]) {
-    this.process.stderr.write(`App "${name}" not found in project "${projectName}".\n`);
-    this.process.exit(1);
-    return;
+    p.log.error(`App "${name}" not found in project "${projectName}".`);
+    process.exit(1);
   }
   // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
   delete project.apps[name];
@@ -89,79 +78,61 @@ export async function remove(this: LocalContext, flags: ProjectFlag, name: strin
     project.current_app = remaining[0];
   }
   writeConfig(config);
-  this.process.stdout.write(`App "${name}" removed from project "${projectName}".\n`);
+  p.log.success(`App "${name}" removed from project "${projectName}".`);
 }
 
-export async function use(this: LocalContext, flags: ProjectFlag, name: string): Promise<void> {
+export async function use(name: string, projectFlag?: string): Promise<void> {
   const config = readConfig();
-  const projectName = resolveProject(config, flags.project);
+  const projectName = resolveProject(config, projectFlag);
   const project = config.projects[projectName];
   if (!project) {
-    this.process.stderr.write(`Project "${projectName}" not found.\n`);
-    this.process.exit(1);
-    return;
+    p.log.error(`Project "${projectName}" not found.`);
+    process.exit(1);
   }
   if (!project.apps[name]) {
-    this.process.stderr.write(`App "${name}" not found in project "${projectName}". Run \`app add ${name}\` first.\n`);
-    this.process.exit(1);
-    return;
+    p.log.error(`App "${name}" not found in project "${projectName}". Run \`app add ${name}\` first.`);
+    process.exit(1);
   }
   project.current_app = name;
   writeConfig(config);
-  this.process.stdout.write(`Current app set to "${name}" in project "${projectName}".\n`);
+  p.log.success(`Current app set to "${name}" in project "${projectName}".`);
 }
 
-interface ShowFlags {
-  project?: string;
-  app?: string;
-}
-
-export async function show(this: LocalContext, flags: ShowFlags): Promise<void> {
+export async function show(projectFlag?: string, appFlag?: string): Promise<void> {
   const config = readConfig();
-  const projectName = resolveProject(config, flags.project);
+  const projectName = resolveProject(config, projectFlag);
   const project = config.projects[projectName];
   if (!project) {
-    this.process.stderr.write(`Project "${projectName}" not found.\n`);
-    this.process.exit(1);
-    return;
+    p.log.error(`Project "${projectName}" not found.`);
+    process.exit(1);
   }
-  const appName = resolveApp(project, flags.app);
+  const appName = resolveApp(project, appFlag);
   const app = project.apps[appName];
   if (!app) {
-    this.process.stderr.write(`App "${appName}" not found in project "${projectName}".\n`);
-    this.process.exit(1);
-    return;
+    p.log.error(`App "${appName}" not found in project "${projectName}".`);
+    process.exit(1);
   }
-  this.process.stdout.write(`Project: ${projectName}\n`);
-  this.process.stdout.write(`App:     ${appName}\n`);
-  this.process.stdout.write(`\n`);
-  if (app.secret_key) {
-    this.process.stdout.write(`secret_key:      ${app.secret_key}\n`);
-  }
-  if (app.publishable_key) {
-    this.process.stdout.write(`publishable_key: ${app.publishable_key}\n`);
-  }
-  if (app.webhook_secret) {
-    this.process.stdout.write(`webhook_secret:  ${app.webhook_secret}\n`);
-  }
-  if (!app.secret_key && !app.publishable_key && !app.webhook_secret) {
-    this.process.stdout.write(`(no keys configured)\n`);
-  }
+  const lines = [`Project: ${projectName}`, `App:     ${appName}`, ''];
+  if (app.secret_key) lines.push(`secret_key:      ${app.secret_key}`);
+  if (app.publishable_key) lines.push(`publishable_key: ${app.publishable_key}`);
+  if (app.webhook_secret) lines.push(`webhook_secret:  ${app.webhook_secret}`);
+  if (!app.secret_key && !app.publishable_key && !app.webhook_secret) lines.push('(no keys configured)');
+  p.note(lines.join('\n'), 'App Config');
 }
 
-export async function setDefault(this: LocalContext, flags: ProjectFlag, name: string): Promise<void> {
+export async function setDefault(name: string, projectFlag?: string): Promise<void> {
   const config = readConfig();
-  const projectName = resolveProject(config, flags.project);
+  const projectName = resolveProject(config, projectFlag);
   const project = config.projects[projectName];
   if (!project) {
-    this.process.stderr.write(`Project "${projectName}" not found.\n`);
-    this.process.exit(1);
+    p.log.error(`Project "${projectName}" not found.`);
+    process.exit(1);
   }
   if (!project.apps[name]) {
-    this.process.stderr.write(`App "${name}" not found in project "${projectName}". Run \`app add ${name}\` first.\n`);
-    this.process.exit(1);
+    p.log.error(`App "${name}" not found in project "${projectName}". Run \`app add ${name}\` first.`);
+    process.exit(1);
   }
   project.default_app = name;
   writeConfig(config);
-  this.process.stdout.write(`Default app set to "${name}" in project "${projectName}".\n`);
+  p.log.success(`Default app set to "${name}" in project "${projectName}".`);
 }

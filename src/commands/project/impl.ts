@@ -1,48 +1,44 @@
-import type { LocalContext } from '../../context';
-import { readConfig, writeConfig, CONFIG_FILE } from '../../lib/config';
+import * as p from '@clack/prompts';
+import { readConfig, writeConfig, CONFIG_FILE } from '../../lib/config.js';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface NoFlags {}
-
-export async function add(this: LocalContext, _flags: NoFlags, name: string): Promise<void> {
+export async function add(name: string): Promise<void> {
   const config = readConfig();
   if (config.projects[name]) {
-    this.process.stderr.write(`Project "${name}" already exists.\n`);
-    this.process.exit(1);
-    return;
+    p.log.error(`Project "${name}" already exists.`);
+    process.exit(1);
   }
   config.projects[name] = { apps: {} };
   if (!config.current_project) {
     config.current_project = name;
   }
   writeConfig(config);
-  this.process.stdout.write(`Project "${name}" added.\n`);
+  p.log.success(`Project "${name}" added.`);
   if (config.current_project === name) {
-    this.process.stdout.write(`Set as current project.\n`);
+    p.log.info(`Set as current project.`);
   }
 }
 
-export async function list(this: LocalContext, _flags: NoFlags): Promise<void> {
+export async function list(): Promise<void> {
   const config = readConfig();
   const names = Object.keys(config.projects);
   if (names.length === 0) {
-    this.process.stdout.write(`No projects configured. Run \`project add <name>\` to create one.\n`);
+    p.log.info('No projects configured. Run `project add <name>` to create one.');
     return;
   }
-  for (const name of names) {
+  const lines = names.map((name) => {
     const isCurrent = name === config.current_project;
     const marker = isCurrent ? '* ' : '  ';
     const appCount = Object.keys(config.projects[name]?.apps ?? {}).length;
-    this.process.stdout.write(`${marker}${name} (${appCount} app${appCount === 1 ? '' : 's'})\n`);
-  }
+    return `${marker}${name} (${appCount} app${appCount === 1 ? '' : 's'})`;
+  });
+  p.note(lines.join('\n'), 'Projects');
 }
 
-export async function remove(this: LocalContext, _flags: NoFlags, name: string): Promise<void> {
+export async function remove(name: string): Promise<void> {
   const config = readConfig();
   if (!config.projects[name]) {
-    this.process.stderr.write(`Project "${name}" not found.\n`);
-    this.process.exit(1);
-    return;
+    p.log.error(`Project "${name}" not found.`);
+    process.exit(1);
   }
   // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
   delete config.projects[name];
@@ -51,18 +47,17 @@ export async function remove(this: LocalContext, _flags: NoFlags, name: string):
     config.current_project = remaining[0];
   }
   writeConfig(config);
-  this.process.stdout.write(`Project "${name}" removed.\n`);
+  p.log.success(`Project "${name}" removed.`);
 }
 
-export async function use(this: LocalContext, _flags: NoFlags, name: string): Promise<void> {
+export async function use(name: string): Promise<void> {
   const config = readConfig();
   if (!config.projects[name]) {
-    this.process.stderr.write(`Project "${name}" not found. Run \`project add ${name}\` first.\n`);
-    this.process.exit(1);
-    return;
+    p.log.error(`Project "${name}" not found. Run \`project add ${name}\` first.`);
+    process.exit(1);
   }
   config.current_project = name;
   writeConfig(config);
-  this.process.stdout.write(`Current project set to "${name}".\n`);
-  this.process.stdout.write(`Config saved to: ${CONFIG_FILE}\n`);
+  p.log.success(`Current project set to "${name}".`);
+  p.log.info(`Config saved to: ${CONFIG_FILE}`);
 }

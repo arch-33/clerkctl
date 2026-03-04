@@ -1,7 +1,7 @@
 {
   "name": "clerk-utils",
   "author": "",
-  "description": "Stricli command line application",
+  "description": "Clerk utilities CLI",
   "license": "MIT",
   "type": "module",
   "version": "0.0.0",
@@ -9,8 +9,7 @@
     "dist"
   ],
   "bin": {
-    "clerk-utils": "dist/cli.js",
-    "__clerk-utils_bash_complete": "dist/bash-complete.js"
+    "clerk-utils": "dist/cli.js"
   },
   "engines": {
     "node": ">=22"
@@ -22,7 +21,6 @@
     "format:check": "prettier --check .",
     "lint-staged": "lint-staged",
     "prepublishOnly": "npm run build",
-    "postinstall": "clerk-utils install",
     "prepare": "husky install"
   },
   "lint-staged": {
@@ -30,8 +28,7 @@
   },
   "tsup": {
     "entry": [
-      "src/bin/cli.ts",
-      "src/bin/bash-complete.ts"
+      "src/bin/cli.ts"
     ],
     "format": [
       "esm"
@@ -42,8 +39,8 @@
     "minify": true
   },
   "dependencies": {
-    "@stricli/auto-complete": "^1.2.6",
-    "@stricli/core": "^1.2.6",
+    "@clack/prompts": "^1.1.0",
+    "commander": "^14.0.3",
     "yaml": "^2.8.2"
   },
   "devDependencies": {
