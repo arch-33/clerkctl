@@ -7,6 +7,7 @@ import { add as appAdd, list as appList, remove as appRemove, use as appUse, sho
 import { config } from '../commands/config/impl.js';
 import { extendSession } from '../commands/extend-session/impl.js';
 import { switchOrg } from '../commands/switch-org/impl.js';
+import { createUserSession } from '../commands/create-session/impl.js';
 
 if (process.argv.length <= 2) {
   await runInteractive();
@@ -21,19 +22,27 @@ const project = program.command('project').description('Manage Clerk projects');
 project
   .command('add <name>')
   .description('Add a new project')
-  .action(async (name: string) => { await projectAdd(name); });
+  .action(async (name: string) => {
+    await projectAdd(name);
+  });
 project
   .command('list')
   .description('List all projects')
-  .action(async () => { await projectList(); });
+  .action(async () => {
+    await projectList();
+  });
 project
   .command('remove <name>')
   .description('Remove a project')
-  .action(async (name: string) => { await projectRemove(name); });
+  .action(async (name: string) => {
+    await projectRemove(name);
+  });
 project
   .command('use <name>')
   .description('Set the current active project')
-  .action(async (name: string) => { await projectUse(name); });
+  .action(async (name: string) => {
+    await projectUse(name);
+  });
 
 // app commands
 const app = program.command('app').description('Manage Clerk apps within a project');
@@ -51,34 +60,57 @@ app
   .command('list')
   .description('List apps in a project')
   .option('--project <name>', 'Project name (defaults to current project)')
-  .action(async (opts: { project?: string }) => { await appList(opts.project); });
+  .action(async (opts: { project?: string }) => {
+    await appList(opts.project);
+  });
 app
   .command('remove <name>')
   .description('Remove an app from a project')
   .option('--project <name>', 'Project name (defaults to current project)')
-  .action(async (name: string, opts: { project?: string }) => { await appRemove(name, opts.project); });
+  .action(async (name: string, opts: { project?: string }) => {
+    await appRemove(name, opts.project);
+  });
 app
   .command('use <name>')
   .description('Set the current active app for a project')
   .option('--project <name>', 'Project name (defaults to current project)')
-  .action(async (name: string, opts: { project?: string }) => { await appUse(name, opts.project); });
+  .action(async (name: string, opts: { project?: string }) => {
+    await appUse(name, opts.project);
+  });
 app
   .command('show')
   .description('Show config for an app')
   .option('--project <name>', 'Project name (defaults to current project)')
   .option('--app <name>', 'App name (defaults to current app)')
-  .action(async (opts: { project?: string; app?: string }) => { await appShow(opts.project, opts.app); });
+  .action(async (opts: { project?: string; app?: string }) => {
+    await appShow(opts.project, opts.app);
+  });
 app
   .command('default <name>')
   .description('Set the default app for a project')
   .option('--project <name>', 'Project name (defaults to current project)')
-  .action(async (name: string, opts: { project?: string }) => { await appSetDefault(name, opts.project); });
+  .action(async (name: string, opts: { project?: string }) => {
+    await appSetDefault(name, opts.project);
+  });
 
 // config command
 program
   .command('config')
   .description('Print config file path')
-  .action(async () => { await config(); });
+  .action(async () => {
+    await config();
+  });
+
+// create-session command
+program
+  .command('create-session <user-id>')
+  .description('Create a new session token for a user (8h expiration)')
+  .option('--project <name>', 'Project name (defaults to current project)')
+  .option('--app <name>', 'App name (defaults to current app)')
+  .option('--org <id>', 'Organization ID to set as active')
+  .action(async (userId: string, opts: { project?: string; app?: string; org?: string }) => {
+    await createUserSession(userId, opts);
+  });
 
 // extend-session command
 program

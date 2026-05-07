@@ -41,20 +41,46 @@ export interface ClerkOrganizationMembership {
   organization: ClerkOrganization;
 }
 
+export interface ClerkEmailAddress {
+  id: string;
+  email_address: string;
+}
+
+export interface ClerkUser {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  username: string | null;
+  email_addresses: ClerkEmailAddress[];
+  primary_email_address_id: string | null;
+}
+
 export async function listUserOrganizationMemberships(secretKey: string, userId: string): Promise<ClerkOrganizationMembership[]> {
   const response = await fetch(`${CLERK_API}/users/${userId}/organization_memberships?limit=100`, {
     headers: headers(secretKey),
   });
   await checkResponse(response);
-  const data = await response.json() as { data: ClerkOrganizationMembership[] };
+  const data = (await response.json()) as { data: ClerkOrganizationMembership[] };
   return data.data;
 }
 
-export async function createSession(secretKey: string, userId: string, activeOrganizationId: string): Promise<ClerkSession> {
+export async function listUsers(secretKey: string, query?: string): Promise<ClerkUser[]> {
+  const params = new URLSearchParams({ limit: '100', order_by: '-created_at' });
+  if (query) params.set('query', query);
+  const response = await fetch(`${CLERK_API}/users?${params}`, {
+    headers: headers(secretKey),
+  });
+  await checkResponse(response);
+  return response.json() as Promise<ClerkUser[]>;
+}
+
+export async function createSession(secretKey: string, userId: string, activeOrganizationId?: string): Promise<ClerkSession> {
+  const body: Record<string, string> = { user_id: userId };
+  if (activeOrganizationId) body['active_organization_id'] = activeOrganizationId;
   const response = await fetch(`${CLERK_API}/sessions`, {
     method: 'POST',
     headers: headers(secretKey),
-    body: JSON.stringify({ user_id: userId, active_organization_id: activeOrganizationId }),
+    body: JSON.stringify(body),
   });
   await checkResponse(response);
   return response.json() as Promise<ClerkSession>;
